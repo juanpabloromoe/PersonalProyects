@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CV Workbench</title>
+<meta name="description" content="Free CV tailoring for internship applications. US résumé, Europe CV, German Lebenslauf and Spanish CV from one profile. Your data never leaves your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand"><h1>CV Workbench</h1><p data-i="tagline">One tailored CV per application, built only from your real experience.</p></div>
+  <nav class="tabs" role="tablist" id="tabs" hidden>
+    <button role="tab" data-tab="tailor" aria-selected="true" data-i="tabTailor">Tailor a CV</button>
+    <button role="tab" data-tab="apps" aria-selected="false" data-i="tabApps">Applications</button>
+    <button role="tab" data-tab="profile" aria-selected="false" data-i="tabProfile">My profile</button>
+  </nav>
+  <label class="lang-pick"><span class="small muted" data-i="uiLang">Language</span>
+    <select id="ui-lang" aria-label="Interface language"><option value="en">English</option><option value="es">Español</option><option value="de">Deutsch</option></select></label>
+</header>
+
+<!-- First visit: guided start -->
+<section id="tab-start" hidden>
+  <div class="hero">
+    <h2 data-i="heroTitle">Build your master profile once. Tailor a CV for every application in minutes.</h2>
+    <p data-i="heroText">Start from the CV or LinkedIn PDF you already have. Everything you enter stays in this browser; nothing is uploaded to a server.</p>
+    <div class="starts">
+      <div class="panel start">
+        <h3 data-i="startImportT">Import my CV or LinkedIn PDF</h3>
+        <p class="small muted" style="margin:0" data-i="startImportD">On LinkedIn: Me → View profile → More → Save to PDF. Any text-based CV PDF works too.</p>
+        <input type="file" id="imp-file" accept="application/pdf">
+        <label class="f"><span data-i="orPaste">Or paste the text</span><textarea id="imp-text" rows="4"></textarea></label>
+        <button class="btn primary" id="imp-go" data-i="impGo">Make my import prompt</button>
+      </div>
+      <div class="panel start">
+        <h3 data-i="startBlankT">Start from scratch</h3>
+        <p class="small muted" style="margin:0" data-i="startBlankD">Fill in a short form: contact, education, experience, skills.</p>
+        <button class="btn" id="start-blank" data-i="startBlankB">Start blank</button>
+      </div>
+      <div class="panel start">
+        <h3 data-i="startDemoT">Look around first</h3>
+        <p class="small muted" style="margin:0" data-i="startDemoD">Load a made-up example student to see how tailoring works. Replace it with your own profile later.</p>
+        <button class="btn" id="start-demo" data-i="startDemoB">Load the example</button>
+      </div>
+    </div>
+    <div class="panel step" id="imp-ai" hidden>
+      <h2 data-i="impAiT">Turn your PDF into a profile</h2>
+      <div class="ai-box">
+        <ol><li data-i="aiStep1">Copy the prompt.</li><li data-i="aiStep2">Paste it into any AI chat (Claude, ChatGPT, Gemini…).</li><li data-i="aiStep3">Paste the whole answer below and press Apply.</li></ol>
+        <div class="row"><button class="btn primary" data-copyfrom="imp-prompt" data-i="copyPrompt">Copy prompt</button><span class="small muted" id="imp-len"></span></div>
+        <textarea id="imp-prompt" rows="3" readonly hidden></textarea>
+        <textarea id="imp-answer" rows="5" data-iph="pasteAnswer" placeholder="Paste the AI's answer here"></textarea>
+        <div class="row"><button class="btn primary" id="imp-apply" data-i="apply">Apply</button><span class="small" id="imp-msg"></span></div>
+      </div>
+      <p class="small muted" style="margin:0" data-i="impCheck">Check every field afterwards in My profile. The AI can misread a PDF.</p>
+    </div>
+  </div>
+</section>
+
+<section id="tab-tailor" hidden>
+  <div class="tailor">
+    <div class="col">
+      <div class="panel step">
+        <h2><span class="n">01</span><span data-i="s1">The job</span></h2>
+        <div class="grid2">
+          <label class="f"><span data-i="company">Company</span><input type="text" id="j-company"></label>
+          <label class="f"><span data-i="position">Position</span><input type="text" id="j-role"></label>
+          <label class="f"><span data-i="deadline">Application deadline</span><input type="date" id="j-deadline"></label>
+          <label class="f"><span data-i="link">Posting link</span><input type="url" id="j-url" placeholder="https://"></label>
+        </div>
+        <label class="f"><span data-i="postingText">Job posting text</span> <span class="hint" data-i="postingHint">Paste the full ad: tasks and requirements.</span>
+          <textarea id="j-posting" rows="7"></textarea></label>
+      </div>
+
+      <div class="panel step">
+        <h2><span class="n">02</span><span data-i="s2">Format and focus</span></h2>
+        <div class="f"><span class="small muted" style="font-weight:600" data-i="cvFormat">CV format</span>
+          <div class="seg" id="s-format">
+            <button data-v="us" aria-pressed="true" data-i="fmtUS">United States</button>
+            <button data-v="de" aria-pressed="false" data-i="fmtDE">Germany / DACH</button>
+            <button data-v="eu" aria-pressed="false" data-i="fmtEU">Europe (English)</button>
+            <button data-v="es" aria-pressed="false" data-i="fmtES">Spain</button>
+            <button data-v="mx" aria-pressed="false" data-i="fmtMX">Mexico / Latin America</button>
+          </div>
+          <span class="small muted" id="format-note"></span>
+        </div>
+        <div class="f" id="track-row"><span class="small muted" style="font-weight:600" data-i="leadDegree">Which degree leads</span>
+          <div class="seg" id="s-track"></div>
+        </div>
+        <div class="f"><span class="small muted" style="font-weight:600" data-i="roleType">Role type (pick one or more)</span>
+          <div class="chips" id="s-family"></div>
+        </div>
+        <details class="box"><summary data-i="sections">Sections, photo and wording</summary>
+          <div class="step">
+            <div class="entrylist" id="entry-toggles"></div>
+            <div class="grid2">
+              <label class="entryrow"><input type="checkbox" id="o-photo"> <span data-i="oPhoto">Photo</span></label>
+              <label class="entryrow"><input type="checkbox" id="o-othercourses"> <span data-i="oOther">Other degree's courses too</span></label>
+              <label class="entryrow"><input type="checkbox" id="o-auth"> <span data-i="oAuth">Work authorization line</span></label>
+              <label class="entryrow"><input type="checkbox" id="o-two"> <span data-i="oTwo">Allow a second page</span></label>
+              <label class="entryrow"><input type="checkbox" id="o-sign"> <span data-i="oSign">Place, date and name at end</span></label>
+            </div>
+            <label class="f"><span data-i="availLine">Availability line</span> <span class="hint" data-i="availHint">European employers expect your start date and length.</span>
+              <input type="text" id="o-avail"></label>
+            <label class="f"><span data-i="summaryL">Short profile at the top</span> <span class="hint" data-i="summaryHint">Optional, 2 lines.</span>
+              <textarea id="o-summary" rows="3"></textarea></label>
+          </div>
+        </details>
+      </div>
+
+      <div class="panel step">
+        <h2><span class="n">03</span><span data-i="s3">Match against the posting</span></h2>
+        <div id="kw-area" class="kw"></div>
+      </div>
+
+      <div class="panel step">
+        <h2><span class="n">04</span><span data-i="s4">Tailor with AI</span></h2>
+        <p class="small muted" style="margin:0" data-i="s4d">Get your bullets picked and reworded to mirror the posting, using only facts in your profile. Works with any AI chat.</p>
+        <div class="ai-box">
+          <ol><li data-i="aiStep1">Copy the prompt.</li><li data-i="aiStep2">Paste it into any AI chat (Claude, ChatGPT, Gemini…).</li><li data-i="aiStep3">Paste the whole answer below and press Apply.</li></ol>
+          <div class="row"><button class="btn primary" id="ai-copy" data-i="copyPrompt">Copy prompt</button><button class="btn" id="ai-clear" hidden data-i="undoAll">Undo all AI edits</button></div>
+          <textarea id="ai-answer" rows="4" data-iph="pasteAnswer" placeholder="Paste the AI's answer here"></textarea>
+          <div class="row"><button class="btn primary" id="ai-apply" data-i="apply">Apply</button></div>
+        </div>
+        <div id="ai-status" class="status" hidden></div>
+        <div id="ai-out" class="edits"></div>
+      </div>
+
+      <div class="panel step">
+        <h2><span class="n">05</span><span data-i="s5">Cover letter</span></h2>
+        <p class="small muted" style="margin:0" data-i="s5d">Optional. Same method: copy the prompt, paste the letter back, edit it, download it.</p>
+        <div class="row"><button class="btn" id="cl-copy" data-i="copyPrompt">Copy prompt</button></div>
+        <textarea id="cl-text" class="letter" rows="10" data-iph="pasteLetter" placeholder="Paste or write your letter here"></textarea>
+        <div class="row"><button class="btn" id="cl-dl" data-i="dlLetter">Download letter PDF</button></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="sheetbar">
+        <span id="fit" class="fit ok">—</span>
+        <div class="row">
+          <button class="btn" id="save-app" data-i="saveApp">Save to applications</button>
+          <button class="btn primary" id="dl" data-i="dlPdf">Download PDF</button>
+        </div>
+      </div>
+      <div id="fit-note" class="small muted"></div>
+      <div class="sheets" id="sheets"><div class="sheet-empty">…</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-apps" hidden>
+  <div class="stats" id="stats"></div>
+  <div class="tablewrap"><table><thead><tr><th data-i="thDeadline">Deadline</th><th data-i="company">Company</th><th data-i="position">Position</th><th data-i="thFormat">Format</th><th data-i="thStatus">Status</th><th></th></tr></thead><tbody id="apps-body"></tbody></table></div>
+</section>
+
+<section id="tab-profile" hidden><div class="prof" id="prof"></div></section>
+
+<p class="privacy" data-i="privacy">Your profile, photo and applications are saved only in this browser (local storage). Clearing site data deletes them, so download a backup from My profile now and then. AI tailoring happens in whatever AI chat you choose; you decide what to paste there.</p>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>window.PDFJS_WORKER="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
