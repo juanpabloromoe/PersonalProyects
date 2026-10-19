@@ -62,7 +62,7 @@ const MONTHS = {en:["January","February","March","April","May","June","July","Au
 const STATUSES = ["Draft","Applied","Interview","Offer","Rejected"];
 
 /* ---------- state ---------- */
-const DEF_JOB = {company:"",role:"",deadline:"",url:"",posting:"",format:"us",track:"all",families:[],include:{},photo:true,othercourses:true,sign:false,workauth:true,allow2:false,avail:"",summary:"",ai:null,reverted:{},appId:null,matchId:null,letter:""};
+const DEF_JOB = {company:"",role:"",deadline:"",url:"",posting:"",format:"us",track:"all",families:[],include:{},photo:true,othercourses:true,sign:false,workauth:true,allow2:false,avail:"",summary:"",ai:null,reverted:{},appId:null,matchId:null,letter:"",why:"",letterAsk:"",letterQs:[]};
 const S = {profile:null, apps:[], matches:[], mfilter:"new", job:{...DEF_JOB}, lastPdf:null, seq:0, pendingImport:"", photoData:null, prev:null, docExtra:{}};
 const PRIVATE = !!window.CVW_PRIVATE;
 const HOST = {db:null, sample:null, downloads:null, assets:null}; // filled only in the private edition
@@ -112,7 +112,7 @@ function fromLegacy(o){
 }
 function normalize(p){ // fill gaps so imported or older profiles never crash the renderer
   const b=blankProfile(); p=p||{}; if(isLegacy(p))p=fromLegacy(p); p.contact={...b.contact,...(p.contact||{})};
-  p.i18n=p.i18n&&typeof p.i18n==="object"?p.i18n:{}; p.options={usStyle:"standard",headings:{},...(p.options||{})};
+  p.i18n=p.i18n&&typeof p.i18n==="object"?p.i18n:{}; p.options={usStyle:"standard",headings:{},letterStyle:"cv",...(p.options||{})}; p.voice={sample:"",notes:"",...(p.voice||{})};
   ["headline","workAuthUS","workAuthEU","availability"].forEach(k=>{if(typeof p[k]!=="string")p[k]=""});
   p.education=(Array.isArray(p.education)?p.education:[]).map(e=>({id:e.id||uid("edu"),school:e.school||"",location:e.location||"",degree:e.degree||"",gpa:e.gpa||"",majors:(Array.isArray(e.majors)&&e.majors.length?e.majors:[{name:""}]).map(m=>({id:m.id||uid("maj"),name:m.name||"",field:m.field||"",start:m.start||"",end:m.end||"",expected:m.expected!==false,coursework:(m.coursework||[]).map(c=>typeof c==="string"?{name:c,tags:[]}:{name:c.name||"",tags:c.tags||[]}).filter(c=>c.name)}))}));
   p.entries=(Array.isArray(p.entries)?p.entries:[]).map(e=>({id:e.id||uid("e"),section:["experience","projects","leadership"].includes(e.section)?e.section:"experience",org:e.org||"",orgSuffix:e.orgSuffix||"",role:e.role||"",location:e.location||"",start:e.start||"",end:e.end||"",label:e.label||"",tags:e.tags||[],show:e.show||{us:true,eu:true},bullets:(e.bullets||[]).map(x=>typeof x==="string"?{id:uid("b"),text:x,tags:[]}:{id:x.id||uid("b"),text:x.text||"",tags:x.tags||[]})}));
@@ -347,15 +347,32 @@ ${JSON.stringify(factsFor())}
 
 POSTING
 ${(J.posting||"").slice(0,12000)}`}
-function letterPrompt(json){const J=S.job;return `Write a cover letter for this job application.
+/* Cover letters: written only when the application asks, in the student's own voice, from FACTS only. */
+const VOICE_RULES=`- Sound like the student wrote it: a real engineering student, direct and practical. Plain everyday words, short and medium sentences, first person. Contractions are fine.
+- Lead with what they did and what they want to learn. No flattery of the company, no big claims about its mission they did not make themselves.
+- One idea per paragraph. No em dashes, no rhetorical questions, no lists of three adjectives, no "not only... but also", no sentence that only summarizes the one before.
+- Never use these words or phrases (or their translations): passionate, thrilled, excited to, eager, leverage, synergy, dynamic, fast-paced, cutting-edge, innovative, spearhead, delve, testament, honed, align(s) perfectly, I am confident, I am writing to, great fit, invaluable, furthermore, moreover, additionally, in conclusion, journey, unique opportunity.`;
+const voiceOf=()=>{const v=S.profile.voice||{};return {notes:(v.notes||"").trim()||(window.CVW_VOICE||""),sample:(v.sample||"").trim()}};
+const LETTER_LANG={en:"English",es:"Spanish",de:"German"};
+function letterPrompt(json){const J=S.job,P=PRESETS[J.format],v=voiceOf(),why=(J.why||"").trim();return `Write a cover letter for this job application, as the student.
 
 RULES
-- Use ONLY facts in FACTS. Do not invent experience, numbers, tools, motivations about the company you cannot support, or anything else.
-- Write in the language of the posting. 250–350 words, 3–4 short paragraphs, no clichés ("I am writing to express my interest", "passionate", "hard-working").
-- Paragraph 1: the position and the single strongest reason you fit. Paragraph 2–3: two concrete examples from FACTS that match the posting's requirements, with their numbers. Last: availability${S.job.avail?" ("+S.job.avail+")":""} and a short close.
-- Start with the salutation and end with the sign-off and the name ${S.profile.contact.name||""}. ${json?'Reply with only JSON: {"letter":"the full letter, paragraphs separated by blank lines"}.':"Reply with only the letter text."}
+- Use ONLY facts in FACTS and WHY. Do not invent experience, numbers, tools, courses, feelings or reasons. If the posting wants something FACTS cannot back, leave it out and add a short question for the student to "questions".
+- Write in ${LETTER_LANG[P.head]||"English"}. ${P.head==="de"?"German Anschreiben conventions, Sie-Form, 1 page.":"200–330 words, 3–4 short paragraphs, US business letter."}
+- Paragraph 1: the position and the main reason they fit. Middle: one or two concrete examples from FACTS that match what the posting asks for, with their real numbers. Last: availability${J.avail?" ("+J.avail+")":""}, work authorization if FACTS has it, and a short plain close.
+- ${why?"WHY is the student's own reason for this company. Keep their ideas and as much of their wording as you can; fix only grammar and spelling, and translate if needed.":"WHY is empty: do not claim any personal reason or feeling about the company. Talk about the work described in the posting instead."}
+- Salutation: use a name only if the posting gives one; otherwise "Dear Hiring Manager," (or the usual one for the language). End with a plain sign-off and the name ${S.profile.contact.name||""}.
+- No header, address or date; the tool adds those.
+
+VOICE
+${VOICE_RULES}${v.notes?"\n- How this student writes: "+v.notes:""}${v.sample?"\n- A sample of their own writing (copy its tone, not its content):\n\"\"\"\n"+v.sample.slice(0,1500)+"\n\"\"\"":""}
+
+${json?'Reply with only JSON: {"letter":"the letter from salutation to name, paragraphs separated by blank lines","questions":["short question for the student", "..."]}':"Reply with the letter text, then a line \"QUESTIONS:\" with anything you needed but FACTS did not have."}
 
 Company: ${J.company||"(not given)"}. Position: ${J.role||"(not given)"}.
+
+WHY
+${why||"(empty)"}
 
 FACTS
 ${JSON.stringify(factsFor())}
@@ -423,15 +440,44 @@ function renderAI(){const ai=S.job.ai,out=$("#ai-out");$("#ai-clear").hidden=!ai
   out.innerHTML=h}
 
 /* ---------- cover letter ---------- */
+const LETTER_RE=/cover\s*letter|letter\s+of\s+(motivation|interest)|motivation(al)?\s+letter|anschreiben|motivationsschreiben|carta\s+de\s+(presentaci[oó]n|motivaci[oó]n)/i;
+function letterAsked(txt){txt=String(txt||"");const m=txt.match(LETTER_RE);if(!m)return "";const near=txt.slice(Math.max(0,m.index-120),m.index+160);
+  if(/optional|not required|if you (wish|like)|encouraged|preferred|opcional|optional|freiwillig/i.test(near))return "optional";return "yes"}
+function renderLetterAsk(){const J=S.job,det=letterAsked(J.posting),v=J.letterAsk||det;syncSeg("#cl-ask",v);
+  $("#cl-det").textContent=t(v==="yes"?"clDetYes":v==="optional"?"clDetOpt":v==="no"?"clDetNo":"clDetNone");
+  $("#cl-body").hidden=!(v==="yes"||v==="optional"||(J.letter||"").trim())}
+const AI_TELLS={en:["passionate","thrilled","excited to","eager to","leverage","synergy","dynamic","fast-paced","cutting-edge","innovative","spearhead","delve","testament","honed","aligns perfectly","align perfectly","i am confident","i am writing to","great fit","perfect fit","invaluable","furthermore","moreover","additionally","in conclusion","journey","unique opportunity","not only","esteemed","i believe i would","proven track record","hit the ground running","team player","detail-oriented","results-driven"],
+  es:["apasionado","apasionada","me complace","por medio de la presente","sinergia","dinámico","vanguardia","innovador","no solo","además,","en conclusión","oportunidad única","sería un gran","estimado equipo de"],
+  de:["mit großem interesse","hiermit bewerbe ich mich","leidenschaft","leidenschaftlich","synergie","dynamisch","innovativ","darüber hinaus","nicht nur","abschließend","einzigartige gelegenheit","teamplayer"]};
+function letterCheck(txt){const out=[];txt=String(txt||"");if(!txt.trim())return out;const low=txt.toLowerCase();
+  const lists=[...new Set([...AI_TELLS.en,...AI_TELLS.es,...AI_TELLS.de])];lists.forEach(w=>{if(low.includes(w))out.push(t("chkPhrase",{p:w}))});
+  if(/—/.test(txt))out.push(t("chkDash"));
+  const words=(txt.match(/\S+/g)||[]).length,P=PRESETS[S.job.format];if(P.head!=="de"&&(words<170||words>380))out.push(t("chkWords",{n:words}));
+  txt.replace(/\n+/g," ").split(/(?<=[.!?])\s+/).forEach(x=>{const n=(x.match(/\S+/g)||[]).length;if(n>34)out.push(t("chkLong",{n,s:x.slice(0,60)+"…"}))});
+  const known=(profileText(S.profile)+" "+(S.profile.education||[]).map(e=>e.gpa).join(" ")+" "+(S.job.avail||"")+" "+(S.job.posting||"")+" "+(S.job.why||"")).replace(/,/g,"");
+  (txt.match(/\$?\d[\d,.]*\s?%?/g)||[]).map(x=>x.trim().replace(/[.,]$/,"")).filter(x=>!/^(19|20)\d\d$/.test(x)&&!/^\d$/.test(x)).forEach(x=>{if(!known.includes(x.replace(/,/g,"")))out.push(t("chkNum",{p:x}))});
+  return [...new Set(out)]}
+function renderLetterCheck(){const txt=$("#cl-text").value,el=$("#cl-check");if(!txt.trim()){el.innerHTML="";return}const L=letterCheck(txt);
+  el.innerHTML=`<b class="small">${esc(t("clCheck"))}</b>`+(L.length?L.map(x=>`<span class="chip warn">${esc(x)}</span>`).join(""):`<span class="chip good">${esc(t("clCheckOk"))}</span>`)}
+function renderLetterQs(){const q=S.job.letterQs||[],el=$("#cl-qs");el.innerHTML=q.length?`<b class="small">${esc(t("clQuestions"))}</b>`+q.map(x=>`<div class="q"><span class="small">${esc(x)}</span></div>`).join(""):""}
+function renderLetter(){renderLetterAsk();renderLetterCheck();renderLetterQs()}
 async function letterClaude(){if((S.job.posting||"").trim().length<40){toast(t("pasteFirst"));return}const b=$("#cl-claude");busy(b,true,t("claudeLetter"));
-  try{const r=await askClaude(letterPrompt(true));const L=r&&(r.letter||r.text);if(typeof L!=="string"||!L.trim())throw {code:"invalid_json"};$("#cl-text").value=L.trim();S.job.letter=L.trim();saveJob()}catch(e){toast(claudeError(e))}finally{busy(b,false)}}
+  try{const r=await askClaude(letterPrompt(true));const L=r&&(r.letter||r.text);if(typeof L!=="string"||!L.trim())throw {code:"invalid_json"};
+    $("#cl-text").value=L.trim();S.job.letter=L.trim();S.job.letterQs=Array.isArray(r.questions)?r.questions.filter(x=>typeof x==="string"&&x.trim()).slice(0,6):[];saveJob();renderLetter()}catch(e){toast(claudeError(e))}finally{busy(b,false)}}
+function letterDate(head){const d=new Date();return head==="de"?String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear():head==="es"?d.getDate()+" de "+MONTHS.es[d.getMonth()]+" de "+d.getFullYear():MONTHS.en[d.getMonth()]+" "+d.getDate()+", "+d.getFullYear()}
+function letterDoc(txt,fsz){
+  const P=PRESETS[S.job.format],doc=mkDoc(P.paper),c=S.profile.contact,cvHead=P.layout==="us"&&S.profile.options.letterStyle!=="classic";
+  const M=cvHead?{l:72,r:72,t:36,b:54}:{l:64,r:64,t:56,b:56},pen=Pen(doc,M),F=P.layout==="us"?"times":"helvetica",R=pen.W-M.r,lh=fsz*1.38;
+  if(cvHead){pen.y+=16;pen.font(F,"bold",20);pen.text(c.name||"",pen.W/2,{align:"center"});pen.y+=14;pen.font(F,"normal",9.6);
+    pen.wrap(contactLine(c).join(" | "),R-M.l).forEach(l=>{pen.text(l,pen.W/2,{align:"center"});pen.y+=12.5});pen.y+=22}
+  else{pen.y+=16;pen.font(F,"bold",16);pen.text(c.name||"",M.l);pen.y+=16;pen.font(F,"normal",9.5);pen.wrap(contactLine(c).concat(c.location||[]).join("  ·  "),R-M.l).forEach(l=>{pen.text(l,M.l);pen.y+=13});pen.y+=18}
+  pen.font(F,"normal",fsz);pen.text(letterDate(P.head),P.head==="de"?R:M.l,P.head==="de"?{align:"right"}:undefined);pen.y+=lh*1.6;
+  if(S.job.company){if(P.head==="en"){pen.text(t("hiringTeam"),M.l);pen.y+=lh}pen.text(S.job.company,M.l);pen.y+=lh*1.6}
+  txt.split(/\n/).forEach(par=>{if(!par.trim()){pen.y+=lh*0.55;return}pen.wrap(par,R-M.l).forEach(l=>{pen.need(lh);pen.text(l,M.l);pen.y+=lh})});
+  return {doc,pages:pen.pages}}
 function letterPdf(){const txt=$("#cl-text").value.trim();if(!txt){toast(t("noLetter"));return}
-  const P=PRESETS[S.job.format],doc=mkDoc(P.paper),M={l:64,r:64,t:56,b:56},pen=Pen(doc,M),F=P.layout==="us"?"times":"helvetica",c=S.profile.contact,R=pen.W-M.r,lh=11*1.4;
-  pen.y+=16;pen.font(F,"bold",16);pen.text(c.name||"",M.l);pen.y+=16;pen.font(F,"normal",9.5);pen.wrap(contactLine(c).concat(c.location||[]).join("  ·  "),R-M.l).forEach(l=>{pen.text(l,M.l);pen.y+=13});
-  pen.y+=18;const d=new Date();pen.font(F,"normal",11);pen.text(P.head==="de"?String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear():P.head==="es"?d.getDate()+" de "+MONTHS.es[d.getMonth()]+" de "+d.getFullYear():MONTHS.en[d.getMonth()]+" "+d.getDate()+", "+d.getFullYear(),P.head==="de"?R:M.l,P.head==="de"?{align:"right"}:undefined);pen.y+=lh*1.6;
-  if(S.job.company){pen.text(S.job.company,M.l);pen.y+=lh*1.6}
-  txt.split(/\n/).forEach(par=>{if(!par.trim()){pen.y+=lh*0.6;return}pen.wrap(par,R-M.l).forEach(l=>{pen.need(lh);pen.text(l,M.l);pen.y+=lh})});
-  saveFile(fileName("letter"),doc.output("blob"))}
+  let r;for(const f of [11,10.5,10]){r=letterDoc(txt,f);if(r.pages===1)break}
+  saveFile(fileName("letter"),r.doc.output("blob"))}
 
 /* ---------- applications ---------- */
 function saveApplication(){const J=S.job;if(!J.company&&!J.role){toast(t("needCompany"));return}
@@ -459,7 +505,7 @@ function renderMatches(){
   el.innerHTML=L.map(m=>{const s=st(m);const flags=(m.flags||[]).map(x=>`<span class="chip ${x.ok===false?"warn":x.ok?"good":""}">${esc(x.text)}</span>`).join("");
     const meta=[t("fmt"+String(m.format||"us").toUpperCase()),m.track?t("mLeads",{x:trk(m.track)}):"",m.foundAt?t("mFound",{d:String(m.foundAt).slice(0,10)}):"",m.source?t("mVia",{s:m.source}):""].filter(Boolean).join(" · ");
     return `<div class="panel match"><div class="top"><div><h3>${esc(m.role)}</h3><div class="small"><span class="co">${esc(m.company)}</span>${m.location?" · "+esc(m.location):""}</div></div>${m.fit?`<span class="score">${esc(t("mFit",{n:m.fit}))}</span>`:""}</div>
-      <div class="flags">${mDue(m.deadline)}${m.dates?`<span class="chip">${esc(m.dates)}</span>`:""}${m.pay?`<span class="chip">${esc(m.pay)}</span>`:""}${s==="applied"?`<span class="chip good">${esc(t("status_Applied"))}</span>`:""}</div>
+      <div class="flags">${mDue(m.deadline)}${m.dates?`<span class="chip">${esc(m.dates)}</span>`:""}${m.pay?`<span class="chip">${esc(m.pay)}</span>`:""}${m.coverLetter==="required"||m.coverLetter==="optional"?`<span class="chip hl">${esc(t(m.coverLetter==="required"?"mLetterReq":"mLetterOpt"))}</span>`:""}${s==="applied"?`<span class="chip good">${esc(t("status_Applied"))}</span>`:""}</div>
       ${m.why&&m.why.length?`<ul>${m.why.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`:""}${flags?`<div class="flags">${flags}</div>`:""}
       <div class="meta">${esc(meta)}</div>
       <div class="row"><button class="btn primary" data-mopen="${esc(m.id)}">${esc(t("mOpen"))}</button>${m.url?`<a class="btn" href="${esc(m.url)}" target="_blank" rel="noopener">${esc(t("mPosting"))}</a>`:""}${s!=="applied"?`<button class="btn" data-mapplied="${esc(m.id)}">${esc(t("mApplied"))}</button>`:""}${s==="skipped"?`<button class="btn" data-mrestore="${esc(m.id)}">${esc(t("mRestore"))}</button>`:s!=="applied"?`<button class="btn" data-mskip="${esc(m.id)}">${esc(t("mSkip"))}</button>`:""}</div></div>`}).join("")}
@@ -471,7 +517,7 @@ function matchJob(m){let j={};try{j=typeof m.job==="string"?JSON.parse(m.job):(m
   out.format=j.format||m.format;out.track=j.track||m.track||"all";
   out.families=j.families||[];fixJob(out);
   const dl=j.deadline||m.deadline||"";Object.assign(out,{company:m.company||j.company||"",role:m.role||j.role||"",url:m.url||j.url||"",posting:j.posting||m.posting||"",deadline:/^\d{4}-\d{2}-\d{2}$/.test(dl)?dl:"",
-    include:j.include||{},reverted:j.reverted||{},ai:j.ai||null,matchId:m.id,appId:null,letter:""});
+    include:j.include||{},reverted:j.reverted||{},ai:j.ai||null,matchId:m.id,appId:null,letter:"",why:"",letterQs:[],letterAsk:{required:"yes",optional:"optional",no:"no"}[m.coverLetter]||""});
   if(!out.avail&&S.profile)out.avail=S.profile.availability;return out}
 function openMatch(id){const m=S.matches.find(x=>x.id===id);if(!m)return;S.job=matchJob(m);saveJob();loadJobUI();showTab("tailor");if((m.status||"new")==="new")setMatch(id,{status:"opened"})}
 function matchApplied(id){const m=S.matches.find(x=>x.id===id);if(!m)return;const J=matchJob(m);
@@ -487,7 +533,11 @@ function renderProfile(){
   <div class="row" style="align-items:flex-start"><div class="photo" style="${photoOf(c)?`background-image:url(${photoOf(c)})`:""}"></div><div class="step" style="gap:6px"><b class="small">${esc(t("photoT"))}</b><span class="small muted">${esc(t("photoD"))}${HOST.assets?" "+esc(t("photoAccount")):""}</span><input type="file" id="ph-file" accept="image/jpeg,image/png,image/webp">${c.photo||c.photoAssetId?`<div><button class="btn small" id="ph-del">${esc(t("removePhoto"))}</button></div>`:""}</div></div></div>`;
   const hd=(p.options.headings||{}).en||{};
   h+=`<div class="panel step"><h2>${esc(t("cvStyle"))}</h2><label class="f">${esc(t("usStyleL"))}<select data-path="options.usStyle"><option value="standard" ${p.options.usStyle!=="cwproj"?"selected":""}>${esc(t("usStd"))}</option><option value="cwproj" ${p.options.usStyle==="cwproj"?"selected":""}>${esc(t("usCw"))}</option></select></label>
-    <span class="flabel">${esc(t("headingsL"))} <span class="hint">${esc(t("headingsHint"))}</span></span><div class="grid2">${fld("options.headings.en.experience",t("hExp"),hd.experience,HEAD.en.experience)}${fld("options.headings.en.leadership",t("hLead"),hd.leadership,HEAD.en.leadership)}${fld("options.headings.en.skills",t("hSkills"),hd.skills,HEAD.en.skills)}${fld("options.headings.en.cwproj",t("hCw"),hd.cwproj,HEAD.en.cwproj)}</div></div>`;
+    <span class="flabel">${esc(t("headingsL"))} <span class="hint">${esc(t("headingsHint"))}</span></span><div class="grid2">${fld("options.headings.en.experience",t("hExp"),hd.experience,HEAD.en.experience)}${fld("options.headings.en.leadership",t("hLead"),hd.leadership,HEAD.en.leadership)}${fld("options.headings.en.skills",t("hSkills"),hd.skills,HEAD.en.skills)}${fld("options.headings.en.cwproj",t("hCw"),hd.cwproj,HEAD.en.cwproj)}</div>
+    <label class="f">${esc(t("letterStyleL"))}<select data-path="options.letterStyle"><option value="cv" ${p.options.letterStyle!=="classic"?"selected":""}>${esc(t("letterCv"))}</option><option value="classic" ${p.options.letterStyle==="classic"?"selected":""}>${esc(t("letterClassic"))}</option></select></label></div>
+  <div class="panel step"><h2>${esc(t("pVoice"))}</h2><p class="small muted" style="margin:0">${esc(t("pVoiceD"))}</p>
+    <label class="f">${esc(t("voiceNotes"))} <span class="hint">${esc(t("voiceNotesHint"))}</span><textarea rows="3" data-path="voice.notes">${esc(p.voice.notes||window.CVW_VOICE||"")}</textarea></label>
+    <label class="f">${esc(t("voiceSample"))} <span class="hint">${esc(t("voiceSampleHint"))}</span><textarea rows="5" data-path="voice.sample">${esc(p.voice.sample)}</textarea></label></div>`;
   p.education.forEach((e,i)=>{h+=`<div class="panel step"><div class="entryhead"><h3>${esc(t("pEducation"))}</h3><button class="btn small" data-deledu="${i}">${esc(t("delete"))}</button></div><div class="grid2">${fld(`education.${i}.school`,t("school"),e.school)}${fld(`education.${i}.location`,t("location"),e.location)}${fld(`education.${i}.degree`,t("degree"),e.degree,t("degreeHint"))}${fld(`education.${i}.gpa`,t("gpa"),e.gpa,t("gpaHint"))}</div>`;
     e.majors.forEach((m,j)=>{h+=`<div class="step" style="border-top:1px dashed var(--line);padding-top:10px"><div class="grid3">${fld(`education.${i}.majors.${j}.name`,t("major"),m.name)}${fld(`education.${i}.majors.${j}.start`,t("start"),m.start,"YYYY-MM")}${fld(`education.${i}.majors.${j}.end`,t("endExp"),m.end,"YYYY-MM")}</div>
       <label class="f">${esc(t("majorField"))}<select data-path="education.${i}.majors.${j}.field"><option value="">—</option>${FAMILIES.map(f=>`<option value="${f.id}" ${m.field===f.id?"selected":""}>${esc(t("fam_"+f.id))}</option>`).join("")}</select></label>
@@ -540,8 +590,8 @@ function showTab(x){document.querySelectorAll("#tabs button").forEach(b=>b.setAt
 function fixJob(o){o.format=PRESETS[o.format]?o.format:"us";if(o.track==="both")o.track="all";o.families=[...new Set((o.families||[]).map(f=>FAM_OLD[f]||f).filter(f=>FAMILIES.some(x=>x.id===f)))];
   o.include=o.include||{};o.reverted=o.reverted||{};return o}
 function loadJobUI(){syncInputs();renderTrack();renderFamilies();renderToggles();renderKeywords();renderAI();schedule()}
-function syncInputs(){const J=S.job;[["#j-company","company"],["#j-role","role"],["#j-deadline","deadline"],["#j-url","url"],["#j-posting","posting"],["#o-avail","avail"],["#o-summary","summary"],["#cl-text","letter"]].forEach(([id,k])=>$(id).value=J[k]||"");
-  [["#o-photo","photo"],["#o-othercourses","othercourses"],["#o-auth","workauth"],["#o-two","allow2"],["#o-sign","sign"]].forEach(([id,k])=>$(id).checked=!!J[k]);syncSeg("#s-format",J.format);formatNote()}
+function syncInputs(){const J=S.job;[["#j-company","company"],["#j-role","role"],["#j-deadline","deadline"],["#j-url","url"],["#j-posting","posting"],["#o-avail","avail"],["#o-summary","summary"],["#cl-text","letter"],["#cl-why","why"]].forEach(([id,k])=>$(id).value=J[k]||"");
+  [["#o-photo","photo"],["#o-othercourses","othercourses"],["#o-auth","workauth"],["#o-two","allow2"],["#o-sign","sign"]].forEach(([id,k])=>$(id).checked=!!J[k]);syncSeg("#s-format",J.format);formatNote();renderLetter()}
 function enterApp(tab){$("#tabs").hidden=false;if(!S.job.avail&&S.profile.availability)S.job.avail=S.profile.availability;syncInputs();renderTrack();renderFamilies();renderToggles();renderKeywords();renderAI();renderApps();showTab(tab||"tailor");schedule()}
 function wire(){
   $("#ui-lang").addEventListener("change",e=>{LANG=e.target.value;store.set("cvw.lang",LANG);applyLang();schedule()});
@@ -553,9 +603,11 @@ function wire(){
   document.addEventListener("click",e=>{const id=e.target.dataset&&e.target.dataset.copyfrom;if(id)copy($("#"+id).value)});
   $("#start-blank").addEventListener("click",()=>{S.profile=blankProfile();saveProfile();enterApp("profile")});
   $("#start-demo").addEventListener("click",()=>{S.profile=demoProfile();saveProfile();S.job={...DEF_JOB,company:"Example Motors",role:"Manufacturing Engineering Intern",posting:"Manufacturing Engineering Intern, Summer 2027. Support production line improvements, lean manufacturing and continuous improvement projects. Create CAD models and technical drawings in SolidWorks. Analyze quality data in Excel and Minitab, support root cause analysis and FMEA. Requirements: pursuing a degree in Mechanical or Industrial Engineering, experience with CAD and 3D printing, strong communication and teamwork. Must be authorized to work in the U.S."};saveJob();enterApp("tailor")});
-  [["#j-company","company"],["#j-role","role"],["#j-url","url"],["#j-deadline","deadline"],["#o-avail","avail"],["#o-summary","summary"],["#cl-text","letter"]].forEach(([id,k])=>$(id).addEventListener("input",e=>{S.job[k]=e.target.value;saveJob();if(k==="company")renderKeywords();if(k!=="letter")schedule()}));
-  $("#j-posting").addEventListener("input",e=>{S.job.posting=e.target.value;saveJob();clearTimeout(wire.k);wire.k=setTimeout(()=>{renderKeywords();schedule()},350)});
-  $("#s-format").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;S.job.format=b.dataset.v;S.job.include={};S.job.photo=PRESETS[b.dataset.v].photo||S.job.format==="es"||S.job.format==="mx"?S.job.photo:false;syncSeg("#s-format",S.job.format);formatNote();renderToggles();saveJob();schedule()});
+  [["#j-company","company"],["#j-role","role"],["#j-url","url"],["#j-deadline","deadline"],["#o-avail","avail"],["#o-summary","summary"],["#cl-text","letter"],["#cl-why","why"]].forEach(([id,k])=>$(id).addEventListener("input",e=>{S.job[k]=e.target.value;saveJob();if(k==="company")renderKeywords();if(k==="letter"){clearTimeout(wire.c);wire.c=setTimeout(renderLetterCheck,300)}else if(k!=="why")schedule()}));
+  $("#j-posting").addEventListener("input",e=>{S.job.posting=e.target.value;saveJob();clearTimeout(wire.k);wire.k=setTimeout(()=>{renderKeywords();renderLetterAsk();schedule()},350)});
+  $("#cl-ask").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;S.job.letterAsk=S.job.letterAsk===b.dataset.v?"":b.dataset.v;saveJob();renderLetterAsk()});
+  $("#cl-copytext").addEventListener("click",()=>{const v=$("#cl-text").value.trim();if(!v){toast(t("noLetter"));return}copy(v)});
+  $("#s-format").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;S.job.format=b.dataset.v;S.job.include={};S.job.photo=PRESETS[b.dataset.v].photo||S.job.format==="es"||S.job.format==="mx"?S.job.photo:false;syncSeg("#s-format",S.job.format);formatNote();renderToggles();renderLetterCheck();saveJob();schedule()});
   $("#s-track").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;S.job.track=b.dataset.v;syncSeg("#s-track",S.job.track);saveJob();schedule()});
   $("#s-family").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const i=S.job.families.indexOf(b.dataset.id);if(i>=0)S.job.families.splice(i,1);else S.job.families.push(b.dataset.id);renderFamilies();saveJob();schedule()});
   $("#entry-toggles").addEventListener("change",e=>{const id=e.target.dataset.eid;if(id){S.job.include[id]=e.target.checked;saveJob();schedule()}});
@@ -620,6 +672,6 @@ async function boot(){
     if(HOST.sample)document.querySelectorAll("[data-claude]").forEach(e=>e.hidden=false);
     if(S.profile){await loadPhoto();if(!$("#tab-profile").hidden)renderProfile();schedule()}}
 }
-window.__cvw={S,HOST,produce,buildModel,normalize,fromLegacy,matchJob};
+window.__cvw={S,HOST,produce,buildModel,normalize,fromLegacy,matchJob,letterDoc,letterCheck};
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();

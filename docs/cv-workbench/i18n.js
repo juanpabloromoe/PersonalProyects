@@ -267,3 +267,53 @@ savedAccount:"In deinem Konto gespeichert.",saveFailAccount:"Speichern im Konto 
 dlCancelled:"Download abgebrochen.",dlFail:"Datei konnte nicht gespeichert werden: {e}",savedFile:"{f} gespeichert",
 loadFail:"Dein Profil wurde nicht geladen. Öffne die Seite auf claude.ai und melde dich an.",photoAccount:"Dein Foto liegt in deinem claude.ai-Konto."
 });
+
+/* Cover letter step: only when asked, in the student's own voice. */
+Object.assign(window.CVW_I18N.en,{
+s5d:"Only when the application asks for one. Drafted from your profile, the posting and your own words.",
+clAsk:"Does the application ask for a cover letter?",clAskYes:"Yes",clAskOpt:"Optional",clAskNo:"No",
+clDetYes:"This posting asks for a cover letter.",clDetOpt:"The posting says a cover letter is optional. A short, specific one can help.",
+clDetNo:"Skipped. No letter for this one.",clDetNone:"The posting doesn't mention a cover letter. Most US internship forms don't need one, so skip it unless the form asks.",
+clWhy:"Why this company, in your own words",clWhyHint:"A few rough lines in any language; typos are fine. The letter keeps your ideas and wording. Leave it empty and it won't make up a reason.",
+clQuestions:"To say more, Claude needs this from you (add it to your profile or to the box above):",
+clCheck:"Does it sound like you?",clCheckOk:"No AI-sounding phrases found. Read it out loud once anyway.",
+chkPhrase:"Sounds like AI: “{p}”",chkDash:"Long dashes (—) are a common AI tell. Use a comma or a period.",chkLong:"Long sentence ({n} words): “{s}”",
+chkWords:"{n} words. Aim for about 200–330 for a US letter.",chkNum:"“{p}” is not in your profile. Make sure it's true.",
+clCopyText:"Copy text",hiringTeam:"Hiring Team",mLetterReq:"Cover letter required",mLetterOpt:"Cover letter optional",
+letterStyleL:"Cover letter look (US formats)",letterCv:"Same header as my résumé",letterClassic:"Classic business letter",
+pVoice:"How you write",pVoiceD:"Cover letters copy your tone from here so they sound like you, not like a chatbot.",
+voiceNotes:"Notes on your style",voiceNotesHint:"e.g. short sentences, plain words, straight to the point",
+voiceSample:"Something you wrote yourself",voiceSampleHint:"An email, a school answer or an application answer. Only its tone is used, never its content."
+});
+Object.assign(window.CVW_I18N.es,{
+s5d:"Solo cuando la postulación la pide. Se redacta con tu perfil, la vacante y tus propias palabras.",
+clAsk:"¿La postulación pide carta de presentación?",clAskYes:"Sí",clAskOpt:"Opcional",clAskNo:"No",
+clDetYes:"Esta vacante pide carta de presentación.",clDetOpt:"La vacante dice que la carta es opcional. Una corta y concreta puede ayudar.",
+clDetNo:"Omitida. Sin carta para esta.",clDetNone:"La vacante no menciona carta. La mayoría de las prácticas en EE. UU. no la piden; omítela salvo que el formulario la pida.",
+clWhy:"Por qué esta empresa, con tus palabras",clWhyHint:"Unas líneas como te salgan, en cualquier idioma. La carta conserva tus ideas y tus palabras. Si lo dejas vacío, no inventa un motivo.",
+clQuestions:"Para decir más, Claude necesita esto de ti (agrégalo a tu perfil o al cuadro de arriba):",
+clCheck:"¿Suena a ti?",clCheckOk:"No hay frases que suenen a IA. Léela en voz alta una vez de todos modos.",
+chkPhrase:"Suena a IA: «{p}»",chkDash:"Las rayas largas (—) delatan a la IA. Usa coma o punto.",chkLong:"Oración larga ({n} palabras): «{s}»",
+chkWords:"{n} palabras. Para EE. UU., apunta a unas 200–330.",chkNum:"«{p}» no está en tu perfil. Asegúrate de que sea cierto.",
+clCopyText:"Copiar texto",hiringTeam:"Hiring Team",mLetterReq:"Piden carta",mLetterOpt:"Carta opcional",
+letterStyleL:"Formato de la carta (formatos EE. UU.)",letterCv:"Mismo encabezado que mi CV",letterClassic:"Carta formal clásica",
+pVoice:"Cómo escribes",pVoiceD:"Las cartas copian tu tono de aquí para que suenen a ti y no a un chatbot.",
+voiceNotes:"Notas sobre tu estilo",voiceNotesHint:"p. ej. frases cortas, palabras simples, directo al punto",
+voiceSample:"Algo que escribiste tú",voiceSampleHint:"Un correo, una respuesta de clase o de una postulación. Solo se usa su tono, nunca su contenido."
+});
+Object.assign(window.CVW_I18N.de,{
+s5d:"Nur wenn die Bewerbung eins verlangt. Aus deinem Profil, der Anzeige und deinen eigenen Worten.",
+clAsk:"Verlangt die Bewerbung ein Anschreiben?",clAskYes:"Ja",clAskOpt:"Optional",clAskNo:"Nein",
+clDetYes:"Diese Anzeige verlangt ein Anschreiben.",clDetOpt:"Laut Anzeige ist ein Anschreiben optional. Ein kurzes, konkretes kann helfen.",
+clDetNo:"Übersprungen. Kein Anschreiben für diese Stelle.",clDetNone:"Die Anzeige erwähnt kein Anschreiben. In Deutschland wird es trotzdem oft erwartet; in den USA meist nicht.",
+clWhy:"Warum dieses Unternehmen, in deinen Worten",clWhyHint:"Ein paar grobe Zeilen, jede Sprache. Das Anschreiben behält deine Ideen und Worte. Leer gelassen erfindet es keinen Grund.",
+clQuestions:"Für mehr braucht Claude das von dir (ins Profil oder ins Feld oben):",
+clCheck:"Klingt es nach dir?",clCheckOk:"Keine KI-typischen Phrasen gefunden. Lies es trotzdem einmal laut.",
+chkPhrase:"Klingt nach KI: „{p}“",chkDash:"Lange Gedankenstriche (—) verraten KI. Nimm Komma oder Punkt.",chkLong:"Langer Satz ({n} Wörter): „{s}“",
+chkWords:"{n} Wörter. Für die USA etwa 200–330.",chkNum:"„{p}“ steht nicht in deinem Profil. Prüfe, ob es stimmt.",
+clCopyText:"Text kopieren",hiringTeam:"Hiring Team",mLetterReq:"Anschreiben verlangt",mLetterOpt:"Anschreiben optional",
+letterStyleL:"Aussehen des Anschreibens (US-Formate)",letterCv:"Gleicher Kopf wie mein Lebenslauf",letterClassic:"Klassischer Geschäftsbrief",
+pVoice:"Wie du schreibst",pVoiceD:"Anschreiben übernehmen von hier deinen Ton, damit sie nach dir klingen und nicht nach einem Chatbot.",
+voiceNotes:"Notizen zu deinem Stil",voiceNotesHint:"z. B. kurze Sätze, einfache Wörter, direkt",
+voiceSample:"Etwas, das du selbst geschrieben hast",voiceSampleHint:"Eine E-Mail oder eine Antwort aus einer Bewerbung. Nur der Ton wird genutzt, nie der Inhalt."
+});

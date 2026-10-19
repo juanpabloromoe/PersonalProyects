@@ -155,10 +155,18 @@
 
       <div class="panel step">
         <h2><span class="n">05</span><span data-i="s5">Cover letter</span></h2>
-        <p class="small muted" style="margin:0" data-i="s5d">Optional. Drafted from your profile and the posting; edit it before you download.</p>
-        <div class="row"><button class="btn primary" id="cl-claude" data-claude hidden data-i="letterClaude">Write it with Claude</button><button class="btn" id="cl-copy" data-i="copyPrompt">Copy prompt</button></div>
-        <textarea id="cl-text" class="letter" rows="10" data-iph="pasteLetter" placeholder="Paste or write your letter here"></textarea>
-        <div class="row"><button class="btn" id="cl-dl" data-i="dlLetter">Download letter PDF</button></div>
+        <p class="small muted" style="margin:0" data-i="s5d">Only when the application asks for one. Drafted from your profile, the posting and your own words.</p>
+        <span class="flabel" data-i="clAsk">Does the application ask for a cover letter?</span>
+        <div class="seg" id="cl-ask" role="group"><button data-v="yes" data-i="clAskYes">Yes</button><button data-v="optional" data-i="clAskOpt">Optional</button><button data-v="no" data-i="clAskNo">No</button></div>
+        <p class="small muted" style="margin:0" id="cl-det"></p>
+        <div class="step" id="cl-body" hidden>
+          <label class="f"><span data-i="clWhy">Why this company, in your own words</span> <span class="hint" data-i="clWhyHint">A few rough lines in any language; typos are fine. The letter keeps your ideas and wording. Leave it empty and it won't make up a reason.</span><textarea id="cl-why" rows="3"></textarea></label>
+          <div class="row"><button class="btn primary" id="cl-claude" data-claude hidden data-i="letterClaude">Write it with Claude</button><button class="btn" id="cl-copy" data-i="copyPrompt">Copy prompt</button></div>
+          <div id="cl-qs" class="step" style="gap:8px"></div>
+          <textarea id="cl-text" class="letter" rows="12" data-iph="pasteLetter" placeholder="Paste or write your letter here"></textarea>
+          <div id="cl-check" class="flags"></div>
+          <div class="row"><button class="btn" id="cl-dl" data-i="dlLetter">Download letter PDF</button><button class="btn" id="cl-copytext" data-i="clCopyText">Copy text</button></div>
+        </div>
       </div>
     </div>
 
